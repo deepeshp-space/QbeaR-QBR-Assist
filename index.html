@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QBeaR: QBR Assist</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- PptxGenJS -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;900&display=swap');
+        
+        :root {
+            --brand-primary: #94a3b8;
+            --brand-secondary: #4F46E5;
+            --brand-accent: #F59E0B;
+            --brand-neutral: #F3F4F6;
+            --brand-dark: #111827;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            /* Mesh Gradient Background */
+            background-color: #f3f4f6;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(205, 78%, 85%, 1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(268, 67%, 88%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(240, 67%, 94%, 1) 0, transparent 50%);
+            background-attachment: fixed;
+            background-size: cover;
+            color: #2e2e2e;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* Dynamic Theme Classes */
+        .text-theme-primary { color: var(--brand-primary); }
+        .bg-theme-primary { background-color: var(--brand-primary); }
+        .border-theme-primary { border-color: var(--brand-primary); }
+        .hover-bg-theme-primary:hover { background-color: var(--brand-primary); filter: brightness(90%); }
+        
+        /* Glassmorphism Card Style */
+        .card { 
+            background: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            border-radius: 1.5rem; /* Rounded 3xl */
+            box-shadow: 
+                0 10px 25px -5px rgba(0, 0, 0, 0.05), 
+                0 8px 10px -6px rgba(0, 0, 0, 0.01),
+                inset 0 0 0 1px rgba(255,255,255,0.5); 
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+        }
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            border-color: rgba(255,255,255,0.9);
+        }
+
+        /* Dynamic Stylized Section Headers */
+        .section-header { 
+            font-size: 0.85rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            color: var(--brand-primary); 
+            margin-bottom: 1.25rem; 
+            border-bottom: 2px solid rgba(0,0,0,0.03); 
+            padding-bottom: 0.75rem; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+        }
+        
+        .input-label { display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; letter-spacing: 0.02em; }
+        
+        /* Glass Inputs */
+        .input-field { 
+            width: 100%; 
+            padding: 0.7rem; 
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0,0,0,0.08); 
+            border-radius: 0.75rem; 
+            font-size: 0.875rem; 
+            transition: all 0.2s; 
+        }
+        .input-field:focus { 
+            background: rgba(255, 255, 255, 1);
+            outline: none; 
+            border-color: var(--brand-primary); 
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5), 0 0 0 2px var(--brand-primary); 
+        }
+        .textarea-field { 
+            width: 100%; 
+            padding: 0.7rem; 
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0,0,0,0.08); 
+            border-radius: 0.75rem; 
+            font-size: 0.875rem; 
+            transition: all 0.2s; 
+            min-height: 80px; 
+        }
+        .textarea-field:focus { 
+            background: rgba(255, 255, 255, 1);
+            outline: none; 
+            border-color: var(--brand-primary); 
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5), 0 0 0 2px var(--brand-primary); 
+        }
+        
+        /* Toggle Switch Styling */
+        .toggle-checkbox:checked { right: 0; border-color: var(--brand-primary); }
+        .toggle-checkbox:checked + .toggle-label { background-color: var(--brand-primary); }
+
+        /* Upload Zones for Data Hub */
+        .upload-zone {
+            border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 1rem; text-align: center;
+            background: rgba(255,255,255,0.5); transition: all 0.2s; cursor: pointer;
+        }
+        .upload-zone:hover { border-color: var(--brand-primary); background: rgba(255,255,255,0.8); }
+
+        /* Animations */
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(var(--brand-primary), 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(var(--brand-primary), 0); }
+            100% { box-shadow: 0 0 0 0 rgba(var(--brand-primary), 0); }
+        }
+        .ai-loading { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: visible !important; }
+
+        .prose h1, .prose h2, .prose h3 { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+        .prose ul { list-style-type: disc; padding-left: 1rem; margin-bottom: 0.5rem; }
+        .prose li { margin-bottom: 0.1rem; }
+        .prose strong { color: var(--brand-primary); }
+
+        /* --- STATUS BADGES (Legacy Module) --- */
+        .status-completed { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; font-weight: 600; }
+        .status-progress { background-color: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 600; }
+        .status-blocked { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; font-weight: 600; }
+        .status-unknown { background-color: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+
+        /* --- DARK MODE OVERRIDES --- */
+        html.dark body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(220, 40%, 20%, 1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(260, 40%, 25%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 100%, hsla(240, 40%, 20%, 1) 0, transparent 50%);
+            color: #f3f4f6;
+        }
+        html.dark .card {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        html.dark .section-header {
+            color: var(--brand-primary);
+            text-shadow: none;
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+        html.dark .text-gray-900 { color: #f3f4f6 !important; }
+        html.dark .text-gray-800 { color: #e2e8f0 !important; }
+        html.dark .text-gray-700 { color: #cbd5e1 !important; }
+        html.dark .text-gray-600 { color: #94a3b8 !important; }
+        html.dark .text-gray-500 { color: #cbd5e1 !important; } /* Lighten gray-500 for readability */
+        html.dark .bg-gray-100 { background-color: rgba(255,255,255,0.1) !important; color: #f3f4f6 !important; border-color: transparent; }
+        html.dark .bg-gray-50 { background-color: rgba(255,255,255,0.05) !important; }
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-white\/40 { background-color: rgba(30, 41, 59, 0.4) !important; }
+        html.dark .bg-white\/60 { background-color: rgba(30, 41, 59, 0.6) !important; }
+        html.dark .bg-white\/80 { background-color: rgba(30, 41, 59, 0.8) !important; }
+        html.dark .input-field, html.dark .textarea-field {
+            background: rgba(15, 23, 42, 0.6);
+            border-color: rgba(255,255,255,0.1);
+            color: #f3f4f6;
+        }
+        html.dark .input-field:focus, html.dark .textarea-field:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: var(--brand-primary);
+        }
+        html.dark .input-label { color: #cbd5e1; }
+        html.dark .border-gray-200, html.dark .border-gray-300 { border-color: rgba(255,255,255,0.1); }
+        /* Modal dark fixes */
+        html.dark .modal-container { background-color: #1e293b; color: #f3f4f6; }
+
+        /* Status Dark Mode */
+        html.dark .status-completed { background-color: rgba(6, 95, 70, 0.5); color: #d1fae5; border-color: #065f46; }
+        html.dark .status-progress { background-color: rgba(30, 64, 175, 0.5); color: #dbeafe; border-color: #1e40af; }
+        html.dark .status-blocked { background-color: rgba(153, 27, 27, 0.5); color: #fee2e2; border-color: #991b1b; }
+        html.dark .status-unknown { background-color: rgba(55, 65, 81, 0.5); color: #e5e7eb; border-color: #374151; }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Top Nav (Glass) -->
+    <nav class="sticky top-0 z-50 border-b border-white/30 dark:border-gray-700 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <!-- Minimalist Bear Icon (Updated to be more bear-like) -->
+                    <svg class="w-9 h-9 mr-3 text-theme-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" /> <!-- Outer Circle -->
+                        <!-- Head Contour -->
+                        <path d="M7 9 C 5 6, 2 9, 4.5 11.5 C 4 16, 9 18, 12 18 C 15 18, 20 16, 19.5 11.5 C 22 9, 19 6, 17 9" />
+                        <path d="M10 9 C 10 9, 14 9, 14 9" opacity="0"/> <!-- spacer -->
+                        <!-- Snout -->
+                        <ellipse cx="12" cy="13.5" rx="3" ry="2.2" />
+                        <!-- Nose -->
+                        <path d="M11 13 h2 q-1 1 -2 0" fill="currentColor" stroke="none" />
+                        <!-- Mouth -->
+                        <path d="M12 13.5 v1 q-0.8 0.8 -1.2 0 m 1.2 0 q 0.8 0.8 1.2 0" stroke-width="1.5" />
+                        <!-- Eyes -->
+                        <circle cx="9" cy="11" r="0.8" fill="currentColor" stroke="none" />
+                        <circle cx="15" cy="11" r="0.8" fill="currentColor" stroke="none" />
+                    </svg>
+                    <span class="text-2xl font-black tracking-tight text-gray-900">
+                        QBeaR: <span class="text-theme-primary">QBR Assist</span>
+                    </span>
+                    
+                    <span class="ml-4 px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">Gemini Powered</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- Dark Mode Toggle -->
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 transition text-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" title="Toggle Dark Mode">
+                        <!-- Sun Icon (Hidden in Dark Mode) -->
+                        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <!-- Moon Icon (Hidden in Light Mode) -->
+                        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+
+                    <button onclick="toggleConfigModal()" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex items-center text-xs font-bold border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 bg-white/60 dark:bg-slate-700/60 hover:bg-white dark:hover:bg-slate-700 transition shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        AI Config
+                    </button>
+                    <div class="text-xs text-right hidden sm:block border-l border-gray-300 pl-4 ml-2">
+                        <p class="font-bold text-gray-800">User: Beary Busy</p>
+                        <p class="text-gray-500 font-medium">Covered CS</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT COLUMN: Configuration (4 cols) -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- 1. Client Profile -->
+                <div class="card p-6">
+                    <h2 class="section-header">
+                        Client Configuration
+                        <button onclick="toggleSection('sectClient', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                    </h2>
+                    <div id="sectClient" class="space-y-4 transition-all duration-300">
+                        <div>
+                            <label class="input-label">Client Name</label>
+                            <input type="text" id="clientName" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Acme Corp">
+                        </div>
+                        <div>
+                            <label class="input-label">Client Logo (.png)</label>
+                            <div class="flex items-center justify-center w-full mt-1">
+                                <label for="logoInput" class="flex flex-col items-center justify-center w-full h-28 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-white/40 hover:bg-white/80 transition hover:border-[var(--brand-primary)] group relative overflow-hidden">
+                                    <div id="logoPlaceholder" class="flex flex-col items-center justify-center pt-5 pb-6 transition-opacity">
+                                        <svg class="w-8 h-8 mb-2 text-gray-300 group-hover:text-[var(--brand-primary)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <p class="text-[10px] text-gray-500 font-medium group-hover:text-[var(--brand-primary)]">Upload PNG</p>
+                                    </div>
+                                    <img id="logoPreview" class="hidden absolute inset-0 w-full h-full object-contain p-4 transition-opacity" />
+                                    <input id="logoInput" type="file" class="hidden" accept="image/png" onchange="handleLogoUpload(this)" />
+                                </label>
+                            </div>
+                            <!-- Logo Controls -->
+                            <div class="flex items-center justify-between mt-3 bg-white/40 p-2 rounded-lg border border-white/50">
+                                <p id="logoStatus" class="text-[10px] text-green-600 hidden font-bold tracking-wide flex items-center"><span class="w-2 h-2 rounded-full bg-green-500 mr-1.5"></span>LOADED</p>
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-[9px] text-gray-500 font-bold uppercase">Size</label>
+                                    <input type="range" id="logoScale" min="0.2" max="2.0" step="0.1" value="0.8" class="w-24 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-[var(--brand-primary)]">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Brand Guidelines (Semantic) -->
+                <div class="card p-6">
+                    <h2 class="section-header">
+                        Brand Guidelines
+                        <div class="flex items-center space-x-2">
+                            <button onclick="document.getElementById('brandAssetInput').click()" class="text-[10px] bg-purple-50 text-purple-700 font-bold px-3 py-1.5 rounded-lg border border-purple-100 hover:bg-purple-100 shadow-sm transition flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                Auto-Detect
+                            </button>
+                            <button onclick="toggleSection('sectBrand', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                        </div>
+                        <input type="file" id="brandAssetInput" class="hidden" accept="image/*,.pdf" onchange="analyzeBrandColors(this)">
+                    </h2>
+                    <div id="sectBrand" class="space-y-3 transition-all duration-300">
+                        <!-- Colors -->
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-3 p-1.5 bg-white/40 rounded-lg border border-white/50">
+                                <input type="color" id="colPrimary" value="#94a3b8" class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer shadow-sm" oninput="updateTheme(this, 'hexPrimary', '--brand-primary')">
+                                <input type="text" id="hexPrimary" value="#94a3b8" class="input-field text-[10px] h-8 w-20 font-mono text-center tracking-wide" oninput="updateTheme(this, 'colPrimary', '--brand-primary')">
+                                <div class="flex-1"><label class="text-[10px] font-black uppercase text-gray-700 block">Primary</label><p class="text-[9px] text-gray-400">Headlines</p></div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-1.5 bg-white/40 rounded-lg border border-white/50">
+                                <input type="color" id="colSecondary" value="#4F46E5" class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer shadow-sm" oninput="updateTheme(this, 'hexSecondary', '--brand-secondary')">
+                                <input type="text" id="hexSecondary" value="#4F46E5" class="input-field text-[10px] h-8 w-20 font-mono text-center tracking-wide" oninput="updateTheme(this, 'colSecondary', '--brand-secondary')">
+                                <div class="flex-1"><label class="text-[10px] font-black uppercase text-gray-700 block">Secondary</label><p class="text-[9px] text-gray-400">Sub-headers</p></div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-1.5 bg-white/40 rounded-lg border border-white/50">
+                                <input type="color" id="colAccent" value="#F59E0B" class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer shadow-sm" oninput="updateTheme(this, 'hexAccent', '--brand-accent')">
+                                <input type="text" id="hexAccent" value="#F59E0B" class="input-field text-[10px] h-8 w-20 font-mono text-center tracking-wide" oninput="updateTheme(this, 'colAccent', '--brand-accent')">
+                                <div class="flex-1"><label class="text-[10px] font-black uppercase text-gray-700 block">Accent</label><p class="text-[9px] text-gray-400">CTAs/Highlights</p></div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-1.5 bg-white/40 rounded-lg border border-white/50">
+                                <input type="color" id="colNeutral" value="#F3F4F6" class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer shadow-sm" oninput="updateTheme(this, 'hexNeutral', '--brand-neutral')">
+                                <input type="text" id="hexNeutral" value="#F3F4F6" class="input-field text-[10px] h-8 w-20 font-mono text-center tracking-wide" oninput="updateTheme(this, 'colNeutral', '--brand-neutral')">
+                                <div class="flex-1"><label class="text-[10px] font-black uppercase text-gray-700 block">Neutral</label><p class="text-[9px] text-gray-400">Backgrounds</p></div>
+                            </div>
+                            <div class="flex items-center space-x-3 p-1.5 bg-white/40 rounded-lg border border-white/50">
+                                <input type="color" id="colDark" value="#111827" class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer shadow-sm" oninput="updateTheme(this, 'hexDark', '--brand-dark')">
+                                <input type="text" id="hexDark" value="#111827" class="input-field text-[10px] h-8 w-20 font-mono text-center tracking-wide" oninput="updateTheme(this, 'colDark', '--brand-dark')">
+                                <div class="flex-1"><label class="text-[10px] font-black uppercase text-gray-700 block">Dark</label><p class="text-[9px] text-gray-400">Body Text</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Data Sources Hub (New Module) -->
+                <div class="card p-6 border-l-4 border-[var(--brand-primary)]">
+                    <h2 class="section-header">
+                        Data Sources Hub
+                        <button onclick="toggleSection('sectData', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                    </h2>
+                    <div id="sectData" class="space-y-3 transition-all duration-300">
+                        <!-- Contract -->
+                        <div class="bg-white/60 rounded-xl border border-white/50 p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-gray-700 flex items-center"><span class="bg-blue-100 p-1 rounded mr-2">📄</span> Contract / SOW</span>
+                                <button onclick="analyzeFile('contract')" class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-bold">✨ Analyze</button>
+                            </div>
+                            <label class="upload-zone py-4 block hover:border-[var(--brand-primary)]">
+                                <input type="file" id="fileContract" class="hidden" accept=".pdf" onchange="updateFileStatus(this, 'statusContract')">
+                                <span class="text-[10px] text-gray-500 font-medium" id="statusContract">Drag & Drop PDF</span>
+                            </label>
+                        </div>
+
+                        <!-- Gainsight -->
+                        <div class="bg-white/60 rounded-xl border border-white/50 p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-gray-700 flex items-center"><span class="bg-green-100 p-1 rounded mr-2">📈</span> Gainsight/Tableau</span>
+                                <button onclick="analyzeFile('gainsight')" class="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 font-bold">✨ Analyze</button>
+                            </div>
+                            <label class="upload-zone py-4 block hover:border-[var(--brand-primary)]">
+                                <input type="file" id="fileGainsight" class="hidden" accept="image/*" onchange="updateFileStatus(this, 'statusGainsight')">
+                                <span class="text-[10px] text-gray-500 font-medium" id="statusGainsight">Drag & Drop Screenshot</span>
+                            </label>
+                        </div>
+
+                        <!-- Prev QBR -->
+                        <div class="bg-white/60 rounded-xl border border-white/50 p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-gray-700 flex items-center"><span class="bg-amber-100 p-1 rounded mr-2">⏮️</span> Prev. QBR Deck</span>
+                                <button onclick="analyzeFile('prevQbr')" class="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded hover:bg-amber-100 font-bold">✨ Analyze</button>
+                            </div>
+                            <label class="upload-zone py-4 block hover:border-[var(--brand-primary)]">
+                                <input type="file" id="filePrevQbr" class="hidden" accept=".pdf,.pptx" onchange="updateFileStatus(this, 'statusPrevQbr')">
+                                <span class="text-[10px] text-gray-500 font-medium" id="statusPrevQbr">Drag & Drop PDF</span>
+                            </label>
+                            <div id="prevQbrOutput" class="hidden mt-2 p-2 bg-amber-50 rounded text-[10px] text-amber-800 border border-amber-100"></div>
+                        </div>
+
+                        <!-- 10-K -->
+                        <div class="bg-white/60 rounded-xl border border-white/50 p-4 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-gray-700 flex items-center"><span class="bg-purple-100 p-1 rounded mr-2">🏛️</span> 10-K / Strategy</span>
+                                <button onclick="analyzeFile('10k')" class="text-[10px] bg-purple-50 text-purple-600 px-2 py-1 rounded hover:bg-purple-100 font-bold">✨ Analyze</button>
+                            </div>
+                            <div class="flex space-x-2 mb-2">
+                            <input type="text" id="manualTicker" class="input-field py-1.5 text-xs font-mono uppercase focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" placeholder="Enter Ticker (e.g. XM)">
+                        </div>
+                        <div id="financialOutput" class="hidden mt-2 p-2 bg-purple-50 rounded text-[10px] text-purple-800 border border-purple-100 max-h-32 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Log -->
+            <div class="bg-slate-800 text-slate-300 p-4 rounded-xl text-xs font-mono shadow-inner border border-slate-700">
+                <div class="uppercase tracking-widest text-[10px] text-slate-500 font-bold mb-2">System Log</div>
+                <div id="simLog" class="h-24 overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-slate-600">
+                    <div class="text-slate-500">Waiting for data inputs...</div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+                <div class="space-y-4">
+                    <!-- Preview Studio -->
+                    <button onclick="togglePreview()" class="w-full bg-theme-primary hover-bg-theme-primary text-white px-4 py-4 rounded-xl shadow-xl hover:shadow-2xl text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center transform hover:-translate-y-0.5 border-t border-white/20">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        Live Preview Studio
+                    </button>
+
+                    <!-- Generate Standard -->
+                    <button onclick="generateFinalDeck()" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-3.5 rounded-xl shadow-sm hover:shadow-md text-sm font-bold tracking-wide transition-all flex items-center justify-center">
+                        Download PPTX (Standard)
+                    </button>
+
+                    <!-- Prompt Export (Moved Up) -->
+                    <div>
+                        <button onclick="generateCanvasPrompt()" class="w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-xl shadow-md text-sm font-medium flex items-center justify-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                Copy Prompt for Google Gemini
+                        </button>
+                    </div>
+
+                    <!-- Google Slides -->
+                    <div id="googleAuthContainer">
+                        <button onclick="simulateGoogleAuth()" class="w-full bg-[#fbbc04] hover:bg-[#e3aa00] text-white px-4 py-4 rounded-xl shadow-lg hover:shadow-xl text-sm font-bold uppercase tracking-widest transition-transform transform hover:-translate-y-0.5 flex items-center justify-center text-gray-900 border-2 border-yellow-500/50">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                                <span>Connect to Google Slides</span>
+                        </button>
+                    </div>
+                    <div id="googleExportContainer" class="hidden">
+                        <button onclick="generateAiDeck()" id="btnAiDeck" class="w-full bg-[#1a73e8] hover:bg-blue-700 text-white px-4 py-4 rounded-xl shadow-lg hover:shadow-xl text-sm font-bold uppercase tracking-widest transition-transform transform hover:-translate-y-0.5 flex items-center justify-center border-t border-white/20">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                <span>Export to Slides (AI Agent)</span>
+                        </button>
+                        <p class="text-[10px] text-center text-green-700 mt-2 font-bold tracking-widest flex items-center justify-center bg-green-50/80 py-1.5 rounded-full border border-green-100 backdrop-blur-sm">
+                            <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+                            CONNECTED: BEARY.BUSY@QUALTRICS.COM
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Module Repository -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- 1. Strategic Pre-Read (Top Position) -->
+                <div class="card p-6 border-l-4 border-[var(--brand-primary)]">
+                    <h2 class="section-header">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                Strategic Pre-Read
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="togglePreReadModal()" class="text-[10px] font-bold text-[var(--brand-primary)] hover:text-[var(--brand-primary)] bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition flex items-center uppercase tracking-wide">
+                                <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                Expand
+                            </button>
+                            <button onclick="toggleSection('sectPreRead', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                        </div>
+                    </h2>
+                    <div id="sectPreRead" class="space-y-4 transition-all duration-300">
+                        <p class="text-xs text-gray-500 font-medium">Generate a briefing on client business goals and recent news using Gemini & Google Search.</p>
+                        <button onclick="generatePreRead()" id="btnPreRead" class="w-full bg-white hover:bg-gray-50 text-[var(--brand-primary)] border border-[var(--brand-primary)] text-xs font-bold py-3 px-3 rounded-xl shadow-sm flex items-center justify-center transition-all uppercase tracking-wide">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                Generate Business Summary
+                        </button>
+                        <div id="preReadOutput" class="hidden h-56 overflow-y-auto text-sm text-gray-700 bg-white/50 p-5 rounded-xl border border-gray-200 prose prose-sm shadow-inner backdrop-blur-sm">
+                            <!-- Gemini content -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: AI POWERED INSIGHTS -->
+                <div class="card p-6 border-l-4 border-[var(--brand-primary)]">
+                    <h2 class="section-header">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                Previous QBR Followup (Vision Analysis)
+                        </div>
+                        <button onclick="toggleSection('sectLegacy', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                    </h2>
+                    
+                    <div id="sectLegacy" class="border border-gray-200 bg-white/40 rounded-xl p-5 hover:bg-white/60 transition-colors">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-900">Previous QBR Followup Analysis</h3>
+                                <p class="text-xs text-gray-500 mt-1">Extracts "Action Items" from uploaded Slide/Image</p>
+                            </div>
+                            <label class="inline-flex relative items-center cursor-pointer">
+                                <input type="checkbox" id="toggleModLegacy" class="sr-only peer" onchange="toggleModule('modLegacyInput', this.checked)">
+                                <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                            </label>
+                        </div>
+                        <div id="modLegacyInput" class="hidden pl-0 border-t border-purple-200 pt-4 mt-3">
+                            <div class="flex space-x-3 mb-4">
+                                <div class="flex-1">
+                                    <input id="legacyFileInput" type="file" accept="image/*,.pdf" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:uppercase file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"/>
+                                </div>
+                                <button onclick="generateAiLegacyAnalysis()" class="bg-purple-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-purple-700 whitespace-nowrap shadow-md transition-transform hover:-translate-y-0.5">
+                                    Analyze File
+                                </button>
+                            </div>
+                            <!-- Results Container -->
+                            <div id="geminiResults" class="hidden">
+                                <p class="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-wider">Extracted Commitments (Gemini 2.5)</p>
+                                <div class="bg-white/80 rounded-xl border border-gray-200 overflow-hidden shadow-sm backdrop-blur-sm">
+                                    <div class="grid grid-cols-3 gap-2 bg-gray-50/80 p-3 text-xs font-bold text-gray-700 border-b">
+                                        <div class="col-span-2">Promise</div>
+                                        <div>Status</div>
+                                    </div>
+                                    <div id="legacyTableBody">
+                                        <!-- Dynamic Content -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usage Intelligence (ROI) - Moved Back to Right Column -->
+                <div class="card p-6">
+                    <h2 class="section-header">
+                        Usage Intelligence (ROI)
+                        <div class="flex items-center space-x-3">
+                            <span class="text-[9px] font-extrabold bg-gray-100 text-gray-500 px-2 py-1 rounded-lg uppercase tracking-wider border border-gray-200">Data Source: SQL</span>
+                            <button onclick="toggleSection('sectROI', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                            </button>
+                        </div>
+                    </h2>
+                    
+                    <div id="sectROI" class="transition-all duration-300">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- MAU -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkMau" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]" checked>
+                                    <label for="checkMau" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">MAU Growth</label>
+                                </div>
+                                <input type="number" id="mauGrowth" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="-12">
+                            </div>
+                            <!-- Hours Saved -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkHours" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]" checked>
+                                    <label for="checkHours" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Hours Saved</label>
+                                </div>
+                                <input type="number" id="timeSaved" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="140">
+                            </div>
+                            <!-- Tickets -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkTickets" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]" checked>
+                                    <label for="checkTickets" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Tickets Closed</label>
+                                </div>
+                                <input type="number" id="ticketsResolved" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="230">
+                            </div>
+                            <!-- Distributions -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkDistros" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]">
+                                    <label for="checkDistros" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Distributions Sent</label>
+                                </div>
+                                <input type="number" id="distributionsSent" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="15000">
+                            </div>
+                            <!-- Workflows -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkWorkflows" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]" checked>
+                                    <label for="checkWorkflows" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Workflows Run</label>
+                                </div>
+                                <input type="number" id="workflowsTriggered" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="4500">
+                            </div>
+                            <!-- Unique Viewers -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkViewers" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]">
+                                    <label for="checkViewers" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Unique Viewers</label>
+                                </div>
+                                <input type="number" id="uniqueViewers" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="158">
+                            </div>
+                            <!-- Action Plans -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkActions" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]" checked>
+                                    <label for="checkActions" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Action Plans</label>
+                                </div>
+                                <input type="number" id="actionPlans" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="13">
+                            </div>
+                            <!-- Response Rate -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkResponse" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]">
+                                    <label for="checkResponse" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Resp. Rate %</label>
+                                </div>
+                                <input type="number" id="responseRate" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value="22">
+                            </div>
+                            <!-- Opt-Out Rate -->
+                            <div class="bg-white/40 p-2 rounded-lg border border-white/50 flex flex-col justify-center">
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="checkOptOut" class="mr-2 h-3.5 w-3.5 accent-[var(--brand-primary)] text-[var(--brand-primary)] rounded border-gray-300 focus:ring-[var(--brand-primary)]">
+                                    <label for="checkOptOut" class="text-[9px] font-bold text-gray-600 uppercase block cursor-pointer">Opt-Out %</label>
+                                </div>
+                                <input type="number" id="optOutRate" class="bg-transparent border-b border-gray-300 w-full text-xs font-semibold focus:outline-none focus:border-[var(--brand-primary)]" value=".5">
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis Trigger -->
+                        <div class="mt-6 border-t border-gray-100 pt-5">
+                            <button id="btnAiNarrative" onclick="generateAiNarrative()" class="w-full bg-theme-primary hover-bg-theme-primary text-white text-xs font-bold uppercase tracking-widest py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center transform hover:-translate-y-0.5">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                Analyze ROI with Gemini
+                            </button>
+                            <!-- Results Container -->
+                            <div id="narrativeBox" class="mt-4 p-5 bg-white/60 border border-white rounded-xl text-sm text-gray-700 hidden shadow-inner backdrop-blur-sm"></div>
+                            
+                            <input type="hidden" id="aiTheme" value="">
+                            <input type="hidden" id="aiHeadline" value="">
+                            <input type="hidden" id="aiSummary" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: STRATEGIC ADD-ONS -->
+                <div class="card p-6">
+                    <h2 class="section-header">
+                        Strategic Add-ons
+                        <button onclick="toggleSection('sectAddons', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                    </h2>
+                    <div id="sectAddons" class="space-y-4 transition-all duration-300">
+
+                        <!-- Module: Engagement Analysis -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-indigo-100 p-2.5 rounded-xl text-indigo-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path></svg>
+                                    </div>
+                                    <div><h3 class="text-sm font-bold text-gray-900">Engagement Analysis</h3><p class="text-xs text-gray-500 mt-0.5">Visualize response rates & NPS.</p></div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModEngagement" class="sr-only peer" onchange="toggleModule('modEngagementInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modEngagementInput" class="hidden grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 mt-3">
+                                <div><label class="input-label">Sent</label><input type="number" id="modEngSent" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="1000"></div>
+                                <div><label class="input-label">Responses</label><input type="number" id="modEngResp" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="250"></div>
+                                <div><label class="input-label">NPS</label><input type="number" id="modEngNPS" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="45"></div>
+                            </div>
+                        </div>
+
+                        <!-- Module: Success Story (With Gemini) -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-green-100 p-2.5 rounded-xl text-green-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <div><h3 class="text-sm font-bold text-gray-900">Success Story (STAR)</h3><p class="text-xs text-gray-500 mt-0.5">Qualitative win slide</p></div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModSuccess" class="sr-only peer" onchange="toggleModule('modSuccessInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modSuccessInput" class="hidden space-y-3 border-t border-gray-100 pt-4 mt-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Draft your notes below</span>
+                                    <button id="btnAiPolish" onclick="generateAiSuccess()" class="text-[10px] bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg border border-purple-200 hover:bg-purple-200 flex items-center font-bold uppercase transition shadow-sm">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
+                                        Polish with Gemini
+                                    </button>
+                                </div>
+                                <div><label class="input-label">Situation</label><textarea id="modSucSit" class="textarea-field h-20 text-xs focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]">Manual exports taking 5hrs/week</textarea></div>
+                                <div><label class="input-label">Solution</label><textarea id="modSucSol" class="textarea-field h-20 text-xs focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]">Implemented Auto-Export Workflow</textarea></div>
+                                <div><label class="input-label">Result</label><textarea id="modSucRes" class="textarea-field h-20 text-xs focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]">Reduced to 0hrs, 100% accuracy</textarea></div>
+                            </div>
+                        </div>
+
+                        <!-- Module: Short-Term Roadmap -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-blue-100 p-2.5 rounded-xl text-blue-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                    </div>
+                                    <div><h3 class="text-sm font-bold text-gray-900">Short-Term Roadmap</h3><p class="text-xs text-gray-500 mt-0.5">Tactical 30/60/90 Days</p></div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModRoadmap" class="sr-only peer" onchange="toggleModule('modRoadmapInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modRoadmapInput" class="hidden pl-12 space-y-3 border-t border-gray-100 pt-4 mt-3">
+                                <div class="flex justify-end">
+                                    <button id="btnAiRoadmap" onclick="generateAiRoadmap()" class="text-[10px] bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-200 flex items-center font-bold uppercase transition shadow-sm">
+                                        ✨ Suggest Plan
+                                    </button>
+                                </div>
+                                <div><label class="input-label">30 Days</label><input type="text" id="modMap1" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Core Team Training"></div>
+                                <div><label class="input-label">60 Days</label><input type="text" id="modMap2" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Integrate CRM Workflows"></div>
+                                <div><label class="input-label">90 Days</label><input type="text" id="modMap3" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Executive Review & Scale"></div>
+                            </div>
+                        </div>
+
+                        <!-- Module: Long-Term Roadmap (NEW) -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-blue-100 p-2.5 rounded-xl text-blue-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    </div>
+                                    <div><h3 class="text-sm font-bold text-gray-900">Long-Term Strategy</h3><p class="text-xs text-gray-500 mt-0.5">Strategic 3/6/12 Months</p></div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModLongTerm" class="sr-only peer" onchange="toggleModule('modLongTermInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modLongTermInput" class="hidden pl-12 space-y-3 border-t border-gray-100 pt-4 mt-3">
+                                <div class="flex justify-end">
+                                    <button id="btnAiLongTerm" onclick="generateAiLongTermRoadmap()" class="text-[10px] bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-200 flex items-center font-bold uppercase transition shadow-sm">
+                                        ✨ Suggest Strategy
+                                    </button>
+                                </div>
+                                <div><label class="input-label">3 Months</label><input type="text" id="modLong3" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Global Expansion"></div>
+                                <div><label class="input-label">6 Months</label><input type="text" id="modLong6" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Advanced Analytics Integration"></div>
+                                <div><label class="input-label">12 Months</label><input type="text" id="modLong12" class="input-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" value="Enterprise-Wide Adoption"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- SECTION 3: SUGGESTED SLIDES -->
+                <div class="card p-6">
+                    <h2 class="section-header">
+                        Suggested Slides
+                        <button onclick="toggleSection('sectSlides', this)" class="text-gray-400 hover:text-[var(--brand-primary)] transition-transform p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                        </button>
+                    </h2>
+                    <div id="sectSlides" class="space-y-4 transition-all duration-300">
+                        
+                        <!-- Module: Agenda (NEW) -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-gray-100 p-2.5 rounded-xl text-gray-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-gray-900">Meeting Agenda</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Define discussion topics</p>
+                                    </div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModAgenda" class="sr-only peer" onchange="toggleModule('modAgendaInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modAgendaInput" class="hidden pl-12 border-t border-gray-100 pt-4 mt-3">
+                                <div class="flex justify-end mb-2">
+                                    <button onclick="generateAiAgenda()" id="btnAiAgenda" class="text-[10px] bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-200 flex items-center font-bold uppercase transition shadow-sm">
+                                        ✨ Suggest Agenda
+                                    </button>
+                                </div>
+                                <label class="input-label">Agenda Items (One per line)</label>
+                                <textarea id="modAgendaText" class="textarea-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" placeholder="1. Executive Summary...">1. Executive Summary
+2. Engagement Analysis
+3. Strategic Roadmap
+4. Discussion</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Module: Attendees -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-gray-100 p-2.5 rounded-xl text-gray-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-gray-900">QBR Attendees</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Splits into Qualtrics vs Client slides</p>
+                                    </div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModAttendees" class="sr-only peer" onchange="toggleModule('modAttendeesInput', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            <div id="modAttendeesInput" class="hidden pl-12 border-t border-gray-100 pt-4 mt-3 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="input-label text-theme-primary">Qualtrics Team</label>
+                                    <textarea id="modAttQualtrics" class="textarea-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" placeholder="Name, Role (One per line)">Beary Busy, TSM
+Beary White, AE
+Sir Fluffington, TSM</textarea>
+                                </div>
+                                <div>
+                                    <label class="input-label text-gray-700">Client Team</label>
+                                    <textarea id="modAttClient" class="textarea-field focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" placeholder="Name, Role (One per line)">Bearly Human, VP Product
+Winnie DePugh, Director of CX</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Module: X4 Promotion -->
+                        <div class="border rounded-xl p-5 bg-white/40 hover:bg-white/70 transition-all hover:shadow-md border-white/50">
+                            <div class="flex items-center justify-between mb-0">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-pink-100 p-2.5 rounded-xl text-pink-600 shadow-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-bold text-gray-900">X4 Event Promotion</h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Promo slide & Keynotes</p>
+                                    </div>
+                                </div>
+                                <label class="inline-flex relative items-center cursor-pointer">
+                                    <input type="checkbox" id="toggleModX4" class="sr-only peer" onchange="toggleModule('modX4Input', this.checked)">
+                                    <div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-[var(--brand-primary)] transition-all peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                                </label>
+                            </div>
+                            
+                            <!-- Expanded X4 Config -->
+                            <div id="modX4Input" class="hidden space-y-4 border-t border-gray-100 pt-4 mt-3">
+                                <!-- Image Upload -->
+                                <div>
+                                    <label class="input-label text-pink-600">Promo Slide Image (Full Screen)</label>
+                                    <label class="upload-zone py-3 block hover:border-pink-400 group cursor-pointer transition-colors border-dashed border-2 border-gray-300 rounded-lg">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <input type="file" id="fileX4Promo" class="hidden" accept="image/*" onchange="handleX4Upload(this)">
+                                            <span id="statusX4Promo" class="text-[10px] text-gray-500 font-medium group-hover:text-pink-500 transition-colors">Click to Upload Image</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Speaker Select -->
+                                <div>
+                                    <label class="input-label text-gray-700 mb-2">Add Keynote Slides</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <label class="flex items-center space-x-2 p-2 rounded hover:bg-white/50 cursor-pointer">
+                                            <input type="checkbox" class="x4-speaker-check rounded text-pink-600 focus:ring-pink-500 border-gray-300" value="Andy Cohen">
+                                            <span class="text-xs text-gray-700 font-medium">Andy Cohen</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 p-2 rounded hover:bg-white/50 cursor-pointer">
+                                            <input type="checkbox" class="x4-speaker-check rounded text-pink-600 focus:ring-pink-500 border-gray-300" value="Priya Parker">
+                                            <span class="text-xs text-gray-700 font-medium">Priya Parker</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 p-2 rounded hover:bg-white/50 cursor-pointer">
+                                            <input type="checkbox" class="x4-speaker-check rounded text-pink-600 focus:ring-pink-500 border-gray-300" value="Jay Shetty">
+                                            <span class="text-xs text-gray-700 font-medium">Jay Shetty</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 p-2 rounded hover:bg-white/50 cursor-pointer">
+                                            <input type="checkbox" class="x4-speaker-check rounded text-pink-600 focus:ring-pink-500 border-gray-300" value="Mindy Kaling">
+                                            <span class="text-xs text-gray-700 font-medium">Mindy Kaling</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- PREVIEW STUDIO MODAL (RE-RENDERED FULL SCREEN) -->
+    <div id="previewModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 z-[100] bg-gray-900 bg-opacity-95 flex flex-col transition-opacity duration-300 backdrop-blur-xl">
+        
+        <!-- Toolbar -->
+        <div class="h-16 flex justify-between items-center px-8 bg-white/5 border-b border-white/10">
+            <div class="flex items-center space-x-4">
+                <span class="text-white font-black tracking-widest text-xs uppercase">Preview Studio</span>
+                <span class="bg-indigo-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full font-mono tracking-wide" id="previewSlideCount">0 SLIDES</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                 <button onclick="generateFinalDeck()" class="bg-white text-gray-900 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 flex items-center shadow-lg transition-transform hover:-translate-y-0.5">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Deck
+                 </button>
+                <button onclick="togglePreview()" class="text-gray-400 hover:text-white transition-colors bg-white/10 p-2 rounded-full hover:bg-white/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Slide Viewport -->
+        <div class="flex-1 flex items-center justify-center p-8 relative">
+            <button onclick="changePreviewSlide(-1)" class="absolute left-8 p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 text-white transition-all hover:scale-105 shadow-2xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            
+            <div id="previewCanvas" class="bg-white aspect-video w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden relative transition-all duration-500 transform scale-100 border border-gray-800">
+                <!-- Slide Content Injected Here -->
+            </div>
+            
+            <button onclick="changePreviewSlide(1)" class="absolute right-8 p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/20 text-white transition-all hover:scale-105 shadow-2xl">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Footer / Dots -->
+        <div class="h-16 flex justify-center items-center space-x-2 bg-white/5 border-t border-white/10">
+            <div id="previewDots" class="flex space-x-2"></div>
+        </div>
+    </div>
+    
+    <!-- PRE-READ EXPANDED MODAL -->
+    <div id="preReadModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[110]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50" onclick="togglePreReadModal()"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-4xl mx-auto rounded shadow-lg z-50 h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h3 class="text-xl font-bold text-gray-800">Strategic Pre-Read: Business Summary</h3>
+                <button onclick="togglePreReadModal()" class="text-gray-500 hover:text-gray-800">✕</button>
+            </div>
+            <div class="p-8 overflow-y-auto flex-1 prose max-w-none" id="preReadModalContent">
+                <!-- Content injected here -->
+            </div>
+            <div class="p-4 border-t flex justify-end">
+                <button onclick="togglePreReadModal()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-200">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI CONFIG MODAL -->
+    <div id="configModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[100]">
+       <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50" onclick="toggleConfigModal()"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p class="text-xl font-bold">Configure AI Prompts</p>
+                    <div class="cursor-pointer z-50" onclick="toggleConfigModal()">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path></svg>
+                    </div>
+                </div>
+                <div class="space-y-4 text-xs">
+                    <div><label class="font-bold block mb-1">Executive Narrative Prompt</label><textarea id="promptNarrative" class="w-full border p-2 h-20 rounded bg-gray-50">Act as an expert Customer Success Manager. Analyze these metrics: MAU Growth {{mau}}%, Automation Usage Growth {{auto}}%, Time Saved {{hours}} hours. Output JSON with keys: "theme", "headline", "summary". Professional tone.</textarea></div>
+                    <div><label class="font-bold block mb-1">Success Story Polisher Prompt</label><textarea id="promptSuccess" class="w-full border p-2 h-20 rounded bg-gray-50">Rewrite these rough QBR notes into "STAR" format corporate speak. Do not use asterisks or bolding. Input: Situation: "{{sit}}", Solution: "{{sol}}", Result: "{{res}}". Output JSON with keys: "situation", "solution", "result".</textarea></div>
+                    <div><label class="font-bold block mb-1">Roadmap Suggester Prompt (Short Term)</label><textarea id="promptRoadmap" class="w-full border p-2 h-20 rounded bg-gray-50">Suggest a 3-phase Short-Term Customer Success Roadmap (30/60/90 days) for client with MAU Growth {{mau}}%. Output JSON with keys: "phase1", "phase2", "phase3". Keep phrases under 6 words.</textarea></div>
+                    <div><label class="font-bold block mb-1">Previous QBR Followup Analysis Prompt</label><textarea id="promptLegacy" class="w-full border p-2 h-20 rounded bg-gray-50">Analyze this image/slide. Extract "Next Steps" or "Action Items" committed to. Output JSON array of objects with keys: "promise" (string) and "status" (default to 'Unknown').</textarea></div>
+                </div>
+                <div class="flex justify-end pt-4"><button onclick="toggleConfigModal()" class="px-4 py-2 bg-brand-blue text-white rounded text-sm hover:bg-blue-600">Save Configurations</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS PROMPT MODAL -->
+    <div id="promptModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[110]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50" onclick="togglePromptModal()"></div>
+        <div class="modal-container bg-white dark:bg-slate-800 w-11/12 md:max-w-2xl mx-auto rounded shadow-lg z-50">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-2">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">Copy Prompt for Google Gemini</h3>
+                    <button onclick="togglePromptModal()" class="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">✕</button>
+                </div>
+                
+                <div class="bg-blue-50 dark:bg-slate-700/50 p-4 rounded-lg border border-blue-100 dark:border-slate-600 mb-4">
+                    <ol class="list-decimal list-inside text-xs text-slate-700 dark:text-slate-300 space-y-1.5 font-medium">
+                        <li>Copy the prompt below.</li>
+                        <li>Paste into <a href="https://gemini.google.com/app" target="_blank" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Gemini Canvas</a>.</li>
+                        <li>Collaborate & Iterate on Deck Content within Gemini.</li>
+                        <li>Ask Gemini to "Generate Presentation" to Export.</li>
+                    </ol>
+                </div>
+
+                <textarea id="canvasPromptOutput" class="w-full h-48 border p-3 rounded bg-gray-50 dark:bg-slate-900 border-gray-200 dark:border-gray-700 text-xs font-mono mb-4 text-gray-800 dark:text-gray-300 focus:ring-[var(--brand-primary)] focus:border-[var(--brand-primary)]" readonly></textarea>
+                <div class="flex justify-end">
+                    <button onclick="copyCanvasPrompt()" class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded text-sm font-bold transition-colors">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL (Unchanged) -->
+    <div id="successModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-[120]">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50" onclick="toggleSuccessModal()"></div>
+        <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded shadow-lg z-50">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex items-center mb-3 text-green-500">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <h3 class="text-xl font-bold text-gray-800">Deck Generated Successfully!</h3>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">Your AI-enhanced QBR deck has been downloaded.</p>
+                <div class="bg-blue-50 p-4 rounded border border-blue-100 mb-4">
+                    <p class="text-xs font-bold text-blue-800 mb-2 uppercase">Google Slides Integration</p>
+                    <ol class="list-decimal list-inside text-xs text-blue-700 space-y-1">
+                        <li>File is ready for import.</li>
+                        <li>Click button below to open Google Slides.</li>
+                        <li>Select <strong>File > Import Slides</strong> and choose the downloaded file.</li>
+                    </ol>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="toggleSuccessModal()" class="px-4 py-2 text-gray-500 text-sm hover:text-gray-700">Close</button>
+                    <a href="https://docs.google.com/presentation/u/0/create" target="_blank" class="px-4 py-2 bg-[#fbbc04] text-gray-900 font-bold rounded text-sm hover:bg-[#f5b400] flex items-center">Open Google Slides</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 0. GLOBAL STATE ---
+        const apiKey = ""; // Runtime provided
+        let clientLogoData = null; 
+        let x4PromoData = null; // New global for X4 image
+        let legacyFileBase64 = null; 
+        let legacyFileMimeType = null;
+        let previewSlides = [];
+        let currentPreviewIndex = 0;
+
+        // --- 1. UTILS ---
+        function toggleConfigModal() {
+            document.getElementById('configModal').classList.toggle('opacity-0');
+            document.getElementById('configModal').classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
+        }
+        function toggleSuccessModal() {
+            document.getElementById('successModal').classList.toggle('opacity-0');
+            document.getElementById('successModal').classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
+        }
+        function togglePromptModal() {
+            document.getElementById('promptModal').classList.toggle('opacity-0');
+            document.getElementById('promptModal').classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
+        }
+        function togglePreReadModal() {
+            // Copy content
+            document.getElementById('preReadModalContent').innerHTML = document.getElementById('preReadOutput').innerHTML;
+            document.getElementById('preReadModal').classList.toggle('opacity-0');
+            document.getElementById('preReadModal').classList.toggle('pointer-events-none');
+            document.body.classList.toggle('modal-active');
+        }
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function simulateGoogleAuth() {
+            const btn = event.target.closest('button');
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Connecting...`;
+            setTimeout(() => {
+                document.getElementById('googleAuthContainer').classList.add('hidden');
+                document.getElementById('googleExportContainer').classList.remove('hidden');
+            }, 1500);
+        }
+
+        function handleLogoUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    clientLogoData = e.target.result;
+                    
+                    // Preview Logic
+                    const preview = document.getElementById('logoPreview');
+                    const placeholder = document.getElementById('logoPlaceholder');
+                    if (preview && placeholder) {
+                        preview.src = clientLogoData;
+                        preview.classList.remove('hidden');
+                        placeholder.classList.add('opacity-0'); // Fade out placeholder
+                    }
+
+                    document.getElementById('logoStatus').classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // New X4 Upload Handler
+        function handleX4Upload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    x4PromoData = e.target.result;
+                    const status = document.getElementById('statusX4Promo');
+                    status.innerText = "Image Loaded Successfully";
+                    status.classList.add('text-green-600', 'font-bold');
+                    status.classList.remove('text-gray-500');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function updateStatusColor(selectEl) {
+            selectEl.className = "text-xs border rounded p-1 "; 
+            const val = selectEl.value;
+            if (val === "Completed") selectEl.classList.add('status-completed');
+            else if (val === "In Progress") selectEl.classList.add('status-progress');
+            else if (val === "Blocked") selectEl.classList.add('status-blocked');
+            else selectEl.classList.add('status-unknown');
+        }
+
+        function toggleModule(id, isChecked) {
+            const el = document.getElementById(id);
+            isChecked ? el.classList.remove('hidden') : el.classList.add('hidden');
+        }
+
+        // --- NEW: Card Collapse Logic ---
+        function toggleSection(id, btn) {
+            const content = document.getElementById(id);
+            const icon = btn.querySelector('svg');
+            
+            if (content.classList.contains('hidden')) {
+                // Expand
+                content.classList.remove('hidden');
+                icon.classList.remove('rotate-180');
+            } else {
+                // Collapse
+                content.classList.add('hidden');
+                icon.classList.add('rotate-180');
+            }
+        }
+
+        function cleanAiText(text) {
+            if (!text) return "";
+            if (Array.isArray(text)) return text.map(t => cleanAiText(t)).join(". "); 
+            if (typeof text !== 'string') return String(text);
+            return text.replace(/\*\*/g, '').replace(/##/g, '').replace(/^-\s/gm, '');
+        }
+
+        function copyCanvasPrompt() {
+            const copyText = document.getElementById("canvasPromptOutput");
+            copyText.select();
+            document.execCommand("copy");
+            event.target.innerText = "Copied!";
+            setTimeout(() => event.target.innerText = "Copy to Clipboard", 2000);
+        }
+
+        // --- DATA HUB LOGIC ---
+        function updateFileStatus(input, statusId) {
+            const el = document.getElementById(statusId);
+            if (input.files.length > 0) {
+                el.innerText = `${input.files.length} file(s) selected`;
+                el.classList.add('text-green-600', 'font-bold');
+                el.classList.remove('text-gray-500');
+                logToSim(`File loaded: ${input.files[0].name}`);
+            }
+        }
+
+        function logToSim(msg) {
+            const log = document.getElementById('simLog');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            entry.innerHTML = `<span class="text-slate-500">[${time}]</span> ${msg}`;
+            log.prepend(entry);
+        }
+
+        async function analyzeFile(type) {
+            const btn = event.target;
+            const orig = btn.innerText; btn.innerText = "⏳..."; btn.disabled = true;
+            
+            try {
+                if(type === 'contract') {
+                    // Mock extraction
+                    logToSim("Analyzing Contract PDF...");
+                    await new Promise(r => setTimeout(r, 800)); // Simulate delay
+                    logToSim("<span class='text-green-400'>SUCCESS:</span> Extracted ACV: $150,000");
+                    logToSim("<span class='text-green-400'>SUCCESS:</span> Extracted Renewal: 2025-12-31");
+                    
+                } else if (type === 'gainsight') {
+                    logToSim("Analyzing Dashboard Screenshot...");
+                    await new Promise(r => setTimeout(r, 800));
+                    logToSim("<span class='text-green-400'>SUCCESS:</span> Health Score detected: 88");
+                    logToSim("<span class='text-green-400'>SUCCESS:</span> NPS detected: 52");
+                    
+                } else if (type === 'prevQbr') {
+                    const mockOutput = "Previous QBR Commitments: 1. Launch new survey. 2. Integrate Salesforce. 3. Enable SSO.";
+                    document.getElementById('prevQbrOutput').innerText = mockOutput;
+                    document.getElementById('prevQbrOutput').classList.remove('hidden');
+                    logToSim("<span class='text-amber-400'>EXTRACTED:</span> Previous commitments found.");
+
+                } else if (type === '10k') {
+                    logToSim("Querying Gemini API for 10-K strategy...");
+                    const ticker = document.getElementById('manualTicker').value || "XM";
+                    // Using existing callGemini with search tool enabled
+                    const res = await callGemini(`Summarize the top 3 strategic priorities for ${ticker} from their latest 10-K or Annual Report. Keep it concise.`, null, true);
+                    if(res) {
+                        document.getElementById('financialOutput').innerHTML = marked.parse(res);
+                        document.getElementById('financialOutput').classList.remove('hidden');
+                        logToSim("<span class='text-purple-400'>AI COMPLETE:</span> Strategy Summary generated.");
+                    } else {
+                        logToSim("<span class='text-red-400'>ERROR:</span> AI Request failed.");
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                logToSim("Error during analysis.");
+            }
+            
+            btn.innerText = orig; btn.disabled = false;
+        }
+
+        // --- NEW HELPER FOR ROI GRID ---
+        function getCheckedMetrics() {
+            const metrics = [];
+            // Safe helper to check existence in case DOM isn't ready or changed
+            const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '0';
+            const isChecked = (id) => document.getElementById(id) && document.getElementById(id).checked;
+
+            if(isChecked('checkMau')) metrics.push(`MAU Growth: ${getVal('mauGrowth')}%`);
+            if(isChecked('checkHours')) metrics.push(`Hours Saved: ${getVal('timeSaved')}`);
+            if(isChecked('checkTickets')) metrics.push(`Tickets Resolved: ${getVal('ticketsResolved')}`);
+            if(isChecked('checkDistros')) metrics.push(`Distributions: ${getVal('distributionsSent')}`);
+            if(isChecked('checkWorkflows')) metrics.push(`Workflows Triggered: ${getVal('workflowsTriggered')}`);
+            if(isChecked('checkViewers')) metrics.push(`Unique Viewers: ${getVal('uniqueViewers')}`);
+            if(isChecked('checkActions')) metrics.push(`Action Plans: ${getVal('actionPlans')}`);
+            if(isChecked('checkResponse')) metrics.push(`Response Rate: ${getVal('responseRate')}%`);
+            if(isChecked('checkOptOut')) metrics.push(`Opt-Out Rate: ${getVal('optOutRate')}%`);
+            
+            return metrics.join(', ');
+        }
+
+        // Color Sync & Dynamic Theme Application
+        function syncHex(colorInput, textId) {
+            document.getElementById(textId).value = colorInput.value.toUpperCase();
+        }
+        function syncColor(textInput, colorId) {
+            if(textInput.value.match(/^#[0-9A-F]{6}$/i)) {
+                document.getElementById(colorId).value = textInput.value;
+            }
+        }
+        function updateTheme(input, targetId, cssVar) {
+            // 1. Sync Inputs
+            if(input.type === 'color') {
+                syncHex(input, targetId);
+                // Update CSS Variable
+                document.documentElement.style.setProperty(cssVar, input.value);
+            } else {
+                syncColor(input, targetId);
+                if(input.value.match(/^#[0-9A-F]{6}$/i)) {
+                    document.documentElement.style.setProperty(cssVar, input.value);
+                }
+            }
+        }
+
+        // --- 2. GEMINI API CLIENT ---
+        async function callGemini(prompt, inlineData = null, useSearch = false) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            if (inlineData) payload.contents[0].parts.push({ inline_data: { mime_type: inlineData.mimeType, data: inlineData.data } });
+            if (useSearch) {
+                payload.tools = [{ google_search: {} }];
+            }
+            try {
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const data = await response.json();
+                let text = data.candidates[0].content.parts[0].text;
+                if (text.startsWith("```json")) text = text.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+                return text;
+            } catch (error) { console.error("Gemini Error:", error); return null; }
+        }
+
+        // --- 3. AI FEATURES ---
+        // Brand Analysis
+        function analyzeBrandColors(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64 = e.target.result.split(',')[1];
+                    const btn = input.previousElementSibling;
+                    const origText = btn.innerText;
+                    btn.innerText = "Scanning..."; btn.disabled = true;
+                    
+                    const prompt = `Act as a Senior UI/UX Designer. Analyze the uploaded brand asset (logo, website screenshot, or document) with high sensitivity to color nuances. 
+                    Extract the 5 specific Hex codes that define the brand identity:
+                    
+                    1. "pri" (Primary): The most dominant color in the logo or headers.
+                    2. "sec" (Secondary): A supporting brand color. If the brand is monocolor, generate a harmonious analogous shade.
+                    3. "acc" (Accent): A high-contrast color suitable for buttons or highlights. If missing, derive a complementary color to the Primary.
+                    4. "neu" (Neutral): A very light background tone (e.g., off-white, light cool gray). Avoid pure white (#FFFFFF).
+                    5. "drk" (Dark): The primary text color (e.g., charcoal, deep navy). Avoid pure black (#000000).
+
+                    Return ONLY a JSON object with these exact keys: { "pri": "#...", "sec": "#...", "acc": "#...", "neu": "#...", "drk": "#..." }`;
+                    
+                    const result = await callGemini(prompt, { mimeType: file.type, data: base64 });
+                    
+                    if(result) {
+                        try {
+                            const colors = JSON.parse(result);
+                            if(colors.pri) { 
+                                document.getElementById('colPrimary').value = colors.pri; 
+                                document.getElementById('hexPrimary').value = colors.pri;
+                                document.documentElement.style.setProperty('--brand-primary', colors.pri);
+                            }
+                            if(colors.sec) { document.getElementById('colSecondary').value = colors.sec; document.getElementById('hexSecondary').value = colors.sec; }
+                            if(colors.acc) { document.getElementById('colAccent').value = colors.acc; document.getElementById('hexAccent').value = colors.acc; }
+                            if(colors.neu) { document.getElementById('colNeutral').value = colors.neu; document.getElementById('hexNeutral').value = colors.neu; }
+                            if(colors.drk) { document.getElementById('colDark').value = colors.drk; document.getElementById('hexDark').value = colors.drk; }
+                        } catch(e){ alert("Could not parse colors."); }
+                    }
+                    btn.innerText = origText; btn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function generatePreRead() {
+            const btn = document.getElementById('btnPreRead');
+            const box = document.getElementById('preReadOutput');
+            const origText = btn.innerHTML;
+            btn.innerHTML = `Generating...`; btn.disabled = true;
+            
+            const client = document.getElementById('clientName').value;
+            const prompt = `Generate a strategic pre-read for ${client}. 
+            Section 1: Business Summary & Recent News (Last 12 Months). 
+            Section 2: Stated Business Goals & Objectives. 
+            Section 3: Suggested Qualtrics Solutions mapped to these goals.
+            Keep it executive and concise. Use markdown.`;
+            
+            const result = await callGemini(prompt, null, true); // useSearch = true
+            
+            if (result) {
+                box.innerHTML = marked.parse(result);
+                box.classList.remove('hidden');
+            }
+            btn.innerHTML = origText; btn.disabled = false;
+        }
+
+        async function generateAiNarrative() {
+            const btn = document.getElementById('btnAiNarrative');
+            const box = document.getElementById('narrativeBox');
+            btn.innerHTML = `Analyzing...`; btn.disabled = true;
+            
+            const metricsString = getCheckedMetrics();
+            let prompt = `Act as a Senior Customer Success Manager. Analyze these ROI metrics: ${metricsString}. 
+            Identify 2 distinct strategic themes. 
+            For each theme, provide a 'headline' and a very short 'summary' (max 20 words) suitable for a single slide.
+            CRITICAL: If any metric is negative, you MUST include a 'coaching_plan' field with a remedial action.
+            Output JSON: { "themes": [{ "theme": "...", "headline": "...", "summary": "...", "coaching_plan": "..." }] }`;
+            
+            const result = await callGemini(prompt);
+            if (result) { 
+                try { 
+                    const json = JSON.parse(result); 
+                    box.classList.remove('hidden'); 
+                    let html = '';
+                    if(json.themes && Array.isArray(json.themes)) {
+                        json.themes.forEach(t => {
+                            html += `<div class="mb-3 border-b border-gray-100 pb-2 last:border-0">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">${cleanAiText(t.theme)}</span>
+                                    ${t.coaching_plan ? `<span class="bg-red-100 text-red-600 text-[9px] px-2 py-0.5 rounded-full font-bold">Needs Coaching</span>` : ''}
+                                </div>
+                                <div class="font-bold text-gray-900 text-sm mt-1">"${cleanAiText(t.headline)}"</div>
+                                <div class="text-xs text-gray-600 mt-1">${cleanAiText(t.summary)}</div>
+                                ${t.coaching_plan ? `<div class="mt-2 bg-red-50 p-2 rounded text-[10px] text-red-700"><strong>Coaching Plan:</strong> ${cleanAiText(t.coaching_plan)}</div>` : ''}
+                            </div>`;
+                        });
+                    }
+                    box.innerHTML = html;
+                    document.getElementById('aiSummary').value = JSON.stringify(json.themes);
+                } catch (e) { 
+                    console.error(e);
+                    box.innerHTML = `<span class="text-red-600">Error parsing.</span>`; 
+                } 
+            }
+            btn.innerHTML = `<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Analyze ROI with Gemini`; 
+            btn.disabled = false;
+        }
+        
+        async function generateAiSuccess() { const btn = document.getElementById('btnAiPolish'); const txt = btn.innerHTML; btn.innerHTML = "✨..."; btn.disabled = true; let prompt = document.getElementById('promptSuccess').value.replace('{{sit}}', document.getElementById('modSucSit').value).replace('{{sol}}', document.getElementById('modSucSol').value).replace('{{res}}', document.getElementById('modSucRes').value); const result = await callGemini(prompt); if (result) { try { const json = JSON.parse(result); document.getElementById('modSucSit').value = cleanAiText(json.situation); document.getElementById('modSucSol').value = cleanAiText(json.solution); document.getElementById('modSucRes').value = cleanAiText(json.result); } catch(e){} } btn.innerHTML = txt; btn.disabled = false; }
+        
+        async function generateAiRoadmap() { 
+            const btn = document.getElementById('btnAiRoadmap'); const txt = btn.innerHTML; btn.innerHTML = "✨..."; btn.disabled = true; 
+            let prompt = document.getElementById('promptRoadmap').value.replace('{{mau}}', document.getElementById('mauGrowth').value); 
+            const result = await callGemini(prompt); 
+            if (result) { try { const json = JSON.parse(result); document.getElementById('modMap1').value = cleanAiText(json.phase1); document.getElementById('modMap2').value = cleanAiText(json.phase2); document.getElementById('modMap3').value = cleanAiText(json.phase3); } catch(e){ console.error(e); alert("Failed to parse AI response"); } } btn.innerHTML = txt; btn.disabled = false; 
+        }
+
+        async function generateAiLongTermRoadmap() {
+            const btn = document.getElementById('btnAiLongTerm'); const txt = btn.innerHTML; btn.innerHTML = "✨..."; btn.disabled = true;
+            let prompt = `Suggest a 3-phase Long-Term Strategic Roadmap (3 Months, 6 Months, 12 Months) for a client with MAU Growth ${document.getElementById('mauGrowth').value}%. Focus on strategic expansion. Output JSON with keys: "phase1", "phase2", "phase3". Keep phrases under 6 words.`;
+            const result = await callGemini(prompt);
+            if (result) { try { const json = JSON.parse(result); document.getElementById('modLong3').value = cleanAiText(json.phase1); document.getElementById('modLong6').value = cleanAiText(json.phase2); document.getElementById('modLong12').value = cleanAiText(json.phase3); } catch(e){ console.error(e); alert("Failed to parse AI response"); } } btn.innerHTML = txt; btn.disabled = false;
+        }
+
+        async function generateAiAgenda() {
+            const btn = document.getElementById('btnAiAgenda'); const txt = btn.innerHTML; btn.innerHTML = "✨..."; btn.disabled = true;
+            let activeModules = [];
+            if(document.getElementById('toggleModLegacy').checked) activeModules.push("Review Past Commitments");
+            if(document.getElementById('toggleModEngagement').checked) activeModules.push("Engagement & NPS Review");
+            if(document.getElementById('toggleModSuccess').checked) activeModules.push("Strategic Wins / Success Stories");
+            if(document.getElementById('toggleModRoadmap').checked || document.getElementById('toggleModLongTerm').checked) activeModules.push("Roadmap & Future Planning");
+            
+            let prompt = `Create a meeting agenda based on these topics: ${activeModules.join(', ')}. Return just a numbered list.`;
+            const result = await callGemini(prompt);
+            if (result) { document.getElementById('modAgendaText').value = cleanAiText(result); }
+            btn.innerHTML = txt; btn.disabled = false;
+        }
+
+        document.getElementById('legacyFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { legacyFileBase64 = e.target.result.split(',')[1]; legacyFileMimeType = file.type; };
+            reader.readAsDataURL(file);
+        });
+        async function generateAiLegacyAnalysis() {
+            if (!legacyFileBase64) { alert("Please upload a file first."); return; }
+            const btn = event.target;
+            btn.innerText = "Analyzing..."; btn.disabled = true;
+            const prompt = document.getElementById('promptLegacy').value;
+            const inlineData = { mimeType: legacyFileMimeType, data: legacyFileBase64 };
+            const result = await callGemini(prompt, inlineData);
+            if (result) { try { let items = JSON.parse(result); if (!Array.isArray(items) && items.items) items = items.items; const tbody = document.getElementById('legacyTableBody'); tbody.innerHTML = ''; items.forEach((item, index) => { const row = `<div class="grid grid-cols-3 gap-2 p-2 border-t border-gray-100 items-center"><div class="col-span-2 text-xs">${cleanAiText(item.promise)}</div><select id="aiStatus${index}" onchange="updateStatusColor(this)" class="text-xs border rounded p-1 bg-gray-50 text-gray-700"><option value="Unknown" selected disabled>Status?</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Blocked">Blocked</option></select><input type="hidden" id="aiPromise${index}" value="${cleanAiText(item.promise)}"></div>`; tbody.innerHTML += row; }); document.getElementById('geminiResults').classList.remove('hidden'); } catch(e) { alert("Failed to parse."); } }
+            btn.innerText = "Analyze File"; btn.disabled = false;
+        }
+
+        function generateCanvasPrompt() {
+            const client = document.getElementById('clientName').value;
+            const metrics = getCheckedMetrics(); // Use dynamic
+            const cols = { pri: document.getElementById('hexPrimary').value, sec: document.getElementById('hexSecondary').value, acc: document.getElementById('hexAccent').value };
+            
+            let modules = [];
+            if(document.getElementById('toggleModAgenda').checked) modules.push(`Agenda:\n${document.getElementById('modAgendaText').value}`);
+            if(document.getElementById('toggleModSuccess').checked) modules.push(`Success Story:\nSituation: ${document.getElementById('modSucSit').value}\nSolution: ${document.getElementById('modSucSol').value}\nResult: ${document.getElementById('modSucRes').value}`);
+            if(document.getElementById('toggleModRoadmap').checked) modules.push(`Short-Term Roadmap:\n30 Days: ${document.getElementById('modMap1').value}\n60 Days: ${document.getElementById('modMap2').value}\n90 Days: ${document.getElementById('modMap3').value}`);
+            if(document.getElementById('toggleModLongTerm').checked) modules.push(`Long-Term Strategy:\n3 Months: ${document.getElementById('modLong3').value}\n6 Months: ${document.getElementById('modLong6').value}\n12 Months: ${document.getElementById('modLong12').value}`);
+            
+            const fullPrompt = `I am building a QBR presentation for ${client}.
+
+VISUAL DESIGN SYSTEM:
+- Primary Color: ${cols.pri} (Headlines)
+- Secondary Color: ${cols.sec} (Subheaders)
+- Accent Color: ${cols.acc} (CTAs)
+- Style: Modern, Clean, Card-based layout.
+- Logo: Place client logo in bottom right.
+
+METRICS:
+${metrics}
+
+CONTENT MODULES:
+${modules.join('\n\n')}
+
+INSTRUCTIONS:
+Using the data above, draft the full speaker notes and slide content. For the visual description of each slide, explicitly reference the Hex codes above.`;
+
+            document.getElementById('canvasPromptOutput').value = fullPrompt;
+            togglePromptModal();
+        }
+
+        async function generateAiDeck() {
+            const btn = document.getElementById('btnAiDeck');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "✨ Constructing...";
+            btn.disabled = true;
+
+            const client = document.getElementById('clientName').value;
+            const metricsString = getCheckedMetrics(); // Use dynamic
+
+            // Gather inputs
+            const successContext = `Situation: ${document.getElementById('modSucSit').value}, Solution: ${document.getElementById('modSucSol').value}, Result: ${document.getElementById('modSucRes').value}`;
+            const attendeesContext = `Qualtrics: ${document.getElementById('modAttQualtrics').value.replace(/\n/g, ', ')}. Client: ${document.getElementById('modAttClient').value.replace(/\n/g, ', ')}`;
+            const roadmapContext = `30 Days: ${document.getElementById('modMap1').value}, 60 Days: ${document.getElementById('modMap2').value}, 90 Days: ${document.getElementById('modMap3').value}`;
+            const longTermContext = `3 Mo: ${document.getElementById('modLong3').value}, 6 Mo: ${document.getElementById('modLong6').value}, 12 Mo: ${document.getElementById('modLong12').value}`;
+            const agendaContext = document.getElementById('modAgendaText').value;
+
+            let activeModules = [];
+            if(document.getElementById('toggleModAgenda').checked) activeModules.push(`Agenda (${agendaContext})`);
+            if(document.getElementById('toggleModLegacy').checked) activeModules.push("Previous QBR Followup Analysis");
+            if(document.getElementById('toggleModEngagement').checked) activeModules.push(`Engagement Analysis (NPS: ${document.getElementById('modEngNPS').value})`);
+            if(document.getElementById('toggleModSuccess').checked) activeModules.push(`Success Story (${successContext})`);
+            if(document.getElementById('toggleModRoadmap').checked) activeModules.push(`Short-Term Roadmap (${roadmapContext})`);
+            if(document.getElementById('toggleModLongTerm').checked) activeModules.push(`Long Term Strategy (${longTermContext})`);
+            if(document.getElementById('toggleModAttendees').checked) activeModules.push(`Meeting Attendees (${attendeesContext})`);
+            if(document.getElementById('toggleModX4').checked) activeModules.push("X4 Summit Promotion");
+
+            const prompt = `Act as a Senior Customer Success Manager. Create a presentation structure for client "${client}".
+            
+            Metrics: ${metricsString}
+            
+            Include these modules if present in the data below:
+            ${activeModules.join('\n')}
+
+            Return a JSON object with this structure:
+            {
+              "slides": [
+                { "title": "...", "subtitle": "..." }, 
+                { "title": "...", "bullets": ["..."], "chart": { "type": "bar", "title": "Efficiency", "labels": ["Q1","Q2","Q3"], "values": [10, 20, 30] } },
+              ]
+            }`;
+
+            const result = await callGemini(prompt);
+            
+            if (result) {
+                try {
+                    const deckData = JSON.parse(result);
+                    renderDeck(deckData.slides, true);
+                    toggleSuccessModal(); 
+                } catch(e) { alert("AI Generation failed. Try again."); console.error(e); }
+            }
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+
+        // --- PREVIEW STUDIO LOGIC ---
+        function togglePreview() {
+            const modal = document.getElementById('previewModal');
+            
+            if (modal.classList.contains('opacity-0')) {
+                // Open
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                buildPreviewData();
+                renderPreviewSlide(0);
+            } else {
+                // Close
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function buildPreviewData() {
+            const client = document.getElementById('clientName').value;
+            const theme = document.getElementById('aiTheme').value || "Operational Review";
+            const cols = { 
+                pri: document.getElementById('colPrimary').value, 
+                sec: document.getElementById('colSecondary').value,
+                acc: document.getElementById('colAccent').value,
+                drk: document.getElementById('colDark').value
+            };
+
+            previewSlides = [];
+
+            // 1. Cover
+            previewSlides.push({
+                type: 'cover',
+                title: `QBR: ${client}`,
+                subtitle: `Strategic Theme: ${theme}`
+            });
+
+            // 2. Agenda
+            if (document.getElementById('toggleModAgenda').checked) {
+                previewSlides.push({
+                    type: 'list',
+                    title: 'Meeting Agenda',
+                    items: document.getElementById('modAgendaText').value.split('\n')
+                });
+            }
+
+            // 3. Exec Summary
+            previewSlides.push({
+                type: 'impact',
+                title: 'Executive Summary',
+                headline: document.getElementById('aiHeadline').value || "Key Performance Metrics",
+                metric: `${document.getElementById('timeSaved').value} Hours Saved`,
+                subMetric: 'Efficiency Gain',
+                summary: document.getElementById('aiSummary').value || "Strong performance in key areas."
+            });
+
+            // 4. Legacy (Fixed)
+            if (document.getElementById('toggleModLegacy').checked) {
+                previewSlides.push({
+                    type: 'list',
+                    title: 'Previous QBR Followup',
+                    items: ["Reviewing Action Items... (See Generated Deck for Full Table)"] 
+                });
+            }
+
+            // 5. Engagement (Fixed)
+            if (document.getElementById('toggleModEngagement').checked) {
+                previewSlides.push({
+                    type: 'impact',
+                    title: 'Engagement Analysis',
+                    headline: "NPS Overview",
+                    metric: document.getElementById('modEngNPS').value,
+                    subMetric: "NPS Score",
+                    summary: `Response Rate analysis based on ${document.getElementById('modEngResp').value} responses.`
+                });
+            }
+
+            // 6. Success Story
+            if (document.getElementById('toggleModSuccess').checked) {
+                previewSlides.push({
+                    type: 'success',
+                    title: 'Strategic Win',
+                    sit: document.getElementById('modSucSit').value,
+                    sol: document.getElementById('modSucSol').value,
+                    res: document.getElementById('modSucRes').value
+                });
+            }
+
+            // 7. Short Roadmap
+            if (document.getElementById('toggleModRoadmap').checked) {
+                previewSlides.push({
+                    type: 'roadmap',
+                    title: '90 Day Plan',
+                    phases: [
+                        { t: "30 Days", d: document.getElementById('modMap1').value },
+                        { t: "60 Days", d: document.getElementById('modMap2').value },
+                        { t: "90 Days", d: document.getElementById('modMap3').value }
+                    ]
+                });
+            }
+
+            // 8. Long Roadmap (Fixed)
+            if (document.getElementById('toggleModLongTerm').checked) {
+                previewSlides.push({
+                    type: 'roadmap',
+                    title: '1 Year Strategy',
+                    phases: [
+                        { t: "3 Months", d: document.getElementById('modLong3').value },
+                        { t: "6 Months", d: document.getElementById('modLong6').value },
+                        { t: "12 Months", d: document.getElementById('modLong12').value }
+                    ]
+                });
+            }
+
+            // 9. Attendees (Fixed)
+            if (document.getElementById('toggleModAttendees').checked) {
+                 previewSlides.push({
+                    type: 'list',
+                    title: 'Attendees',
+                    items: ["Qualtrics Team: " + document.getElementById('modAttQualtrics').value.split('\n')[0] + "...", "Client Team: " + document.getElementById('modAttClient').value.split('\n')[0] + "..."]
+                });
+            }
+
+            // 10. X4 (Fixed)
+            if (document.getElementById('toggleModX4').checked) {
+                 // Promo Slide
+                 if (x4PromoData) {
+                     previewSlides.push({
+                        type: 'image_full',
+                        image: x4PromoData
+                    });
+                 } else {
+                     previewSlides.push({
+                        type: 'cover', 
+                        title: 'X4 Summit',
+                        subtitle: 'The Experience Management Event'
+                    });
+                 }
+
+                 // Speaker Slides
+                 const speakers = document.querySelectorAll('.x4-speaker-check:checked');
+                 speakers.forEach(sp => {
+                     previewSlides.push({
+                        type: 'impact',
+                        title: 'Keynote Speaker',
+                        headline: sp.value,
+                        summary: "Live at X4 Seattle",
+                        metric: "2026",
+                        subMetric: "Visionary"
+                     });
+                 });
+            }
+
+
+            // Update Header Count
+            document.getElementById('previewSlideCount').innerText = `${previewSlides.length} SLIDES`;
+            
+            // Render Dots
+            const dots = document.getElementById('previewDots');
+            dots.innerHTML = previewSlides.map((_, i) => `<div class="w-2 h-2 rounded-full ${i === 0 ? 'bg-white' : 'bg-white/30'}"></div>`).join('');
+        }
+
+        function changePreviewSlide(dir) {
+            let newIndex = currentPreviewIndex + dir;
+            if (newIndex < 0) newIndex = previewSlides.length - 1;
+            if (newIndex >= previewSlides.length) newIndex = 0;
+            renderPreviewSlide(newIndex);
+        }
+
+        function renderPreviewSlide(index) {
+            currentPreviewIndex = index;
+            const slide = previewSlides[index];
+            const canvas = document.getElementById('previewCanvas');
+            const cols = { 
+                pri: document.getElementById('colPrimary').value, 
+                sec: document.getElementById('colSecondary').value,
+                acc: document.getElementById('colAccent').value 
+            };
+
+            // Update Dots
+            const dots = document.getElementById('previewDots').children;
+            for(let i=0; i<dots.length; i++) dots[i].className = `w-2 h-2 rounded-full ${i === index ? 'bg-white' : 'bg-white/30'}`;
+
+            // Render HTML based on type
+            let html = '';
+            
+            if (slide.type === 'cover') {
+                html = `
+                    <div class="w-full h-full flex flex-col justify-center p-12 relative" style="background-color: ${document.getElementById('colNeutral').value}">
+                        <div class="absolute top-0 left-0 w-4 h-full" style="background-color: ${cols.pri}"></div>
+                        ${clientLogoData ? `<img src="${clientLogoData}" class="h-12 w-auto mb-8 object-contain object-left"/>` : ''}
+                        <h1 class="text-5xl font-black mb-4 text-gray-900">${slide.title}</h1>
+                        <p class="text-2xl font-light" style="color: ${cols.sec}">${slide.subtitle}</p>
+                    </div>
+                `;
+            } else if (slide.type === 'image_full') { // New Image Type
+                html = `
+                    <div class="w-full h-full relative bg-black">
+                        <img src="${slide.image}" class="w-full h-full object-cover" />
+                    </div>
+                `;
+            } else if (slide.type === 'impact') {
+                html = `
+                    <div class="w-full h-full p-12 flex flex-col bg-white">
+                        <h2 class="text-3xl font-bold mb-2" style="color: ${cols.pri}">${slide.title}</h2>
+                        <hr class="border-t-2 w-full mb-8" style="border-color: ${cols.acc}">
+                        <div class="flex-1 grid grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h3 class="text-xl font-bold mb-4" style="color: ${cols.sec}">${slide.headline}</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">${slide.summary}</p>
+                            </div>
+                            <div class="bg-gray-50 p-8 rounded-xl border border-gray-100 flex flex-col items-center justify-center text-center">
+                                <span class="text-5xl font-black mb-2" style="color: ${cols.pri}">${slide.metric}</span>
+                                <span class="text-sm font-bold text-gray-400 uppercase tracking-widest">${slide.subMetric}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (slide.type === 'success') {
+                html = `
+                    <div class="w-full h-full p-12 bg-white">
+                        <h2 class="text-3xl font-bold mb-8" style="color: ${cols.pri}">${slide.title}</h2>
+                        <div class="grid grid-cols-3 gap-4 h-3/4">
+                            <div class="p-4 bg-gray-50 rounded border-l-4" style="border-color: ${cols.pri}">
+                                <h4 class="font-bold mb-2 text-gray-400 text-xs uppercase">Situation</h4>
+                                <p class="text-sm font-medium">${slide.sit}</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded border-l-4" style="border-color: ${cols.sec}">
+                                <h4 class="font-bold mb-2 text-gray-400 text-xs uppercase">Solution</h4>
+                                <p class="text-sm font-medium">${slide.sol}</p>
+                            </div>
+                            <div class="p-4 bg-gray-50 rounded border-l-4" style="border-color: ${cols.acc}">
+                                <h4 class="font-bold mb-2 text-gray-400 text-xs uppercase">Result</h4>
+                                <p class="text-sm font-bold text-gray-900">${slide.res}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (slide.type === 'roadmap') {
+                html = `
+                    <div class="w-full h-full p-12 bg-white">
+                        <h2 class="text-3xl font-bold mb-8" style="color: ${cols.pri}">${slide.title}</h2>
+                        <div class="space-y-6">
+                            ${slide.phases.map((p, i) => `
+                                <div class="flex items-center">
+                                    <div class="w-24 font-bold text-lg" style="color: ${i==0?cols.pri : i==1?cols.sec : cols.acc}">${p.t}</div>
+                                    <div class="flex-1 ml-4 p-3 bg-gray-50 rounded border border-gray-100 text-sm font-medium text-gray-700">${p.d}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fallback List
+                html = `
+                    <div class="w-full h-full p-12 bg-white">
+                        <h2 class="text-3xl font-bold mb-8" style="color: ${cols.pri}">${slide.title}</h2>
+                        <ul class="space-y-3">
+                            ${slide.items ? slide.items.map(item => `<li class="flex items-start"><span class="mr-2 mt-1 w-2 h-2 rounded-full bg-gray-400"></span><span class="text-lg text-gray-700">${item}</span></li>`).join('') : ''}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            canvas.innerHTML = html;
+        }
+
+        // --- 5. PPTX GENERATOR (Unified) ---
+        
+        function generateFinalDeck() {
+            renderDeck(null, false);
+        }
+
+        function renderDeck(aiSlides, isAiMode) {
+            const pres = new PptxGenJS();
+            
+            // Branding - Mapped to Semantics
+            const cols = { 
+                pri: document.getElementById('colPrimary').value, 
+                sec: document.getElementById('colSecondary').value, 
+                acc: document.getElementById('colAccent').value,
+                neu: document.getElementById('colNeutral').value, 
+                drk: document.getElementById('colDark').value 
+            };
+            const client = document.getElementById('clientName').value;
+            const logoScale = parseFloat(document.getElementById('logoScale').value);
+
+            // 1. MASTER SLIDE DEF (The Visual Engine)
+            pres.defineSlideMaster({
+                title: "MASTER",
+                background: { color: cols.neu },
+                objects: [
+                    { rect: { x: 0, y: 0, w: 0.15, h: '100%', fill: cols.pri } },
+                    { rect: { x: 0, y: 5.3, w: '100%', h: 0.3, fill: cols.sec } },
+                    { rect: { x: 0.2, y: 0.3, w: 0.5, h: 0.05, fill: cols.acc } },
+                    { ellipse: { x: 9.3, y: 0.3, w: 0.5, h: 0.5, fill: {color:cols.pri, transparency:80} } },
+                    clientLogoData ? { image: { data: clientLogoData, x: 9.0, y: 5.0, w: 0.8 * logoScale, h: 0.4 * logoScale, sizing: { type:'contain', w:0.8 * logoScale, h:0.4 * logoScale } } } : {}
+                ]
+            });
+
+            if (isAiMode && aiSlides) {
+                // --- AI MODE ---
+                aiSlides.forEach((slideData, index) => {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    
+                    if (index === 0) { // Title Slide
+                        s.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: cols.neu }); 
+                        s.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: 3.5, h: '100%', fill: cols.pri }); 
+                        if(clientLogoData) s.addImage({ data: clientLogoData, x: 0.5, y: 0.5, w: 2.5 * logoScale, h: 1.2 * logoScale, sizing: { type:'contain' } });
+                        else s.addShape(pres.ShapeType.rect, { x: 0.5, y: 0.5, w: 2.5, h: 1.2, fill: "FFFFFF", line: {color:"CCCCCC", width:1, dashType:'dash'}, text:{text:"LOGO HERE", options:{color:"CCCCCC"}} });
+
+                        s.addText(cleanAiText(slideData.title), { x: 4.0, y: 2.5, w: '60%', fontSize: 44, bold: true, color: cols.drk });
+                        s.addText(cleanAiText(slideData.subtitle) || "", { x: 4.0, y: 4.0, w: '60%', fontSize: 24, color: cols.sec });
+                    } else {
+                        // Content Slides
+                        s.addText(cleanAiText(slideData.title), { x: 0.5, y: 0.3, w: '90%', fontSize: 32, bold: true, color: cols.pri }); 
+                        s.addShape(pres.ShapeType.line, { x:0.5, y:0.9, w:9.0, h:0, line:cols.acc, lineSize:2 }); 
+
+                        if (slideData.chart) {
+                            // Split Layout
+                            s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 4.5, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                            if (slideData.bullets) {
+                                let bulletObjs = slideData.bullets.map(t => ({ text: cleanAiText(t), options: { bullet: true, color: cols.drk } }));
+                                s.addText(bulletObjs, { x: 0.6, y: 1.3, w: 4.3, h: 3.6, fontSize: 16 });
+                            }
+                            s.addShape(pres.ShapeType.rect, { x: 5.2, y: 1.2, w: 4.5, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                            let chartData = [{ name: slideData.chart.title, labels: slideData.chart.labels, values: slideData.chart.values }];
+                            let chartType = slideData.chart.type === 'doughnut' ? pres.ChartType.doughnut : pres.ChartType.bar;
+                            s.addChart(chartType, chartData, { x: 5.3, y: 1.3, w: 4.3, h: 3.6, showLegend: true, title: slideData.chart.title, titleColor: cols.pri });
+                        } else {
+                            // Full Layout
+                            s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 9.0, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                            if (slideData.bullets) {
+                                let bulletObjs = slideData.bullets.map(t => ({ text: cleanAiText(t), options: { bullet: true, color: cols.drk } }));
+                                s.addText(bulletObjs, { x: 0.6, y: 1.3, w: 8.8, h: 3.6, fontSize: 18 });
+                            }
+                        }
+                    }
+                });
+
+            } else {
+                // --- MANUAL MODE ---
+                const theme = document.getElementById('aiTheme').value || "Operational Review";
+                const headline = document.getElementById('aiHeadline').value || "QBR Executive Summary";
+                const summary = document.getElementById('aiSummary').value || "Reviewing key performance metrics.";
+
+                // Slide 1: Title
+                let s1 = pres.addSlide();
+                s1.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: cols.neu }); 
+                s1.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: 3.5, h: '100%', fill: cols.pri }); 
+                s1.addShape(pres.ShapeType.ellipse, { x: 8.0, y: 4.0, w: 3.0, h: 3.0, fill: {color:cols.acc, transparency:90} });
+
+                if (clientLogoData) s1.addImage({ data: clientLogoData, x: 0.5, y: 0.5, w: 2.5 * logoScale, h: 1.2 * logoScale, sizing: { type: 'contain' } });
+                else s1.addShape(pres.ShapeType.rect, { x: 0.5, y: 0.5, w: 2.5, h: 1.2, fill: "FFFFFF", line: {color:"CCCCCC", width:1, dashType:'dash'}, text:{text:"PLACE LOGO HERE", options:{color:"CCCCCC"}} });
+                
+                s1.addText(`QBR: ${client}`, { x: 4.0, y: 2.5, w: '60%', fontSize: 44, bold: true, color: cols.drk });
+                s1.addText(`Theme: ${theme}`, { x: 4.0, y: 4.0, w: '60%', fontSize: 24, color: cols.sec });
+
+                // Slide 2: Agenda
+                if (document.getElementById('toggleModAgenda').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Meeting Agenda", { x: 0.5, y: 0.3, w: '90%', fontSize: 32, bold: true, color: cols.pri });
+                    s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 9.0, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    const agendaLines = document.getElementById('modAgendaText').value.split('\n');
+                    let bulletObjs = agendaLines.map(t => ({ text: t, options: { bullet: false, color: cols.drk, breakLine: true } }));
+                    s.addText(bulletObjs, { x: 0.8, y: 1.5, w: 8.4, h: 3.2, fontSize: 20, lineSpacing: 32 });
+                }
+
+                // Slide 3: Exec Summary
+                let s2 = pres.addSlide({ masterName: "MASTER" });
+                s2.addText(headline, { x: 0.5, y: 0.3, w: '90%', fontSize: 32, bold: true, color: cols.pri });
+                s2.addShape(pres.ShapeType.line, { x:0.5, y:0.9, w:9.0, h:0, line:cols.acc, lineSize:2 });
+
+                s2.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 4.5, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                s2.addText(summary, { x: 0.6, y: 1.3, w: 4.3, fontSize: 16, color: cols.drk });
+                s2.addShape(pres.ShapeType.ellipse, { x: 0.6, y: 2.0, w: 0.4, h: 0.4, fill: cols.acc });
+                s2.addText([{ text: `ROI Impact: ${document.getElementById('timeSaved').value} Hours Saved`, options: { bold: true, bullet: false, color: cols.drk } }], { x: 1.1, y: 2.0, w: 3.8, h: 0.5, fontSize: 16 });
+                
+                s2.addShape(pres.ShapeType.rect, { x: 5.2, y: 1.2, w: 4.5, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                let roiData = [{ name: "Hours Saved", labels: ["Q1", "Q2", "Q3"], values: [80, 110, parseInt(document.getElementById('timeSaved').value)] }];
+                s2.addChart(pres.ChartType.bar, roiData, { x: 5.3, y: 1.3, w: 4.3, h: 3.6, showLegend: false, title: "Efficiency Gains", titleColor: cols.pri });
+
+                // Legacy
+                if (document.getElementById('toggleModLegacy').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Previous QBR Followup Analysis", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    const rows = [[{ text: "Promise", options: { bold: true, fill: cols.pri, color: "FFFFFF" } }, { text: "Status", options: { bold: true, fill: cols.pri, color: "FFFFFF" } }]];
+                    const tbody = document.getElementById('legacyTableBody');
+                    if (tbody) {
+                        tbody.querySelectorAll('div.grid').forEach((div, idx) => {
+                            const p = document.getElementById(`aiPromise${idx}`).value;
+                            const st = document.getElementById(`aiStatus${idx}`).value;
+                            let statusColor = cols.drk;
+                            if(st==="Completed") statusColor = "#008000"; 
+                            if(st==="Blocked") statusColor = "#FF0000";
+                            rows.push([p, {text: st, options:{color: statusColor, bold:true}}]);
+                        });
+                        s.addTable(rows, { x: 1, y: 1.5, w: 8, border: { pt: 1, color: "CCCCCC" } });
+                    }
+                }
+
+                // Engagement
+                if (document.getElementById('toggleModEngagement').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Engagement Analysis", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.0, w: 9.0, h: 4.0, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    let npsVal = parseInt(document.getElementById('modEngNPS').value);
+                    let chartData = [{ name: "NPS", labels: ["Promoters", "Others"], values: [npsVal, 100-npsVal] }];
+                    s.addChart(pres.ChartType.doughnut, chartData, { x: 1.5, y: 1.2, w: 7.0, h: 3.6, holeSize: 60, showLegend: true });
+                    s.addText(`${npsVal}`, { x: 4.5, y: 2.8, fontSize: 40, bold: true, align:'center', color: cols.pri }); 
+                }
+                
+                // Success Story
+                if (document.getElementById('toggleModSuccess').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Success Story", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    
+                    const cards = [
+                        { t: "Situation", c: document.getElementById('modSucSit').value, x: 0.5 },
+                        { t: "Solution", c: document.getElementById('modSucSol').value, x: 3.7 },
+                        { t: "Result", c: document.getElementById('modSucRes').value, x: 6.9 }
+                    ];
+                    
+                    cards.forEach(card => {
+                        s.addShape(pres.ShapeType.rect, { x: card.x, y: 1.2, w: 2.8, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                        s.addText(card.t, { x: card.x + 0.1, y: 1.4, w: 2.6, fontSize: 16, bold: true, color: cols.pri, align:'center' });
+                        s.addText(card.c, { x: card.x + 0.1, y: 2.0, w: 2.6, fontSize: 14, color: cols.drk, align:'center' });
+                    });
+                    
+                    s.addShape(pres.ShapeType.rect, { x: 7.5, y: 0.3, w: 2.0, h: 0.5, fill: "EEEEEE", line: {color:"999999", dashType:'dash'}, text:{text:"INSERT GRAPH", options:{color:"999999", fontSize:10}} });
+                }
+
+                // Short Roadmap
+                if (document.getElementById('toggleModRoadmap').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Tactical Roadmap (90 Days)", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 9.0, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    const phases = [
+                        { t: "30 Days", d: document.getElementById('modMap1').value, y: 1.5, c: cols.pri },
+                        { t: "60 Days", d: document.getElementById('modMap2').value, y: 2.5, c: cols.sec },
+                        { t: "90 Days", d: document.getElementById('modMap3').value, y: 3.5, c: cols.acc }
+                    ];
+                    phases.forEach(p => {
+                        s.addText(p.t, { x: 1.0, y: p.y, w: 2.0, fontSize: 18, bold: true, color: p.c });
+                        s.addText(p.d, { x: 3.0, y: p.y, w: 6.0, fontSize: 18, color: cols.drk });
+                        s.addShape(pres.ShapeType.line, { x:1.0, y:p.y+0.6, w:8.0, h:0, line:"EEEEEE" });
+                    });
+                }
+
+                // Long Term Roadmap
+                if (document.getElementById('toggleModLongTerm').checked) {
+                    let s = pres.addSlide({ masterName: "MASTER" });
+                    s.addText("Strategic Roadmap (1 Year)", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    s.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 9.0, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    const phases = [
+                        { t: "3 Months", d: document.getElementById('modLong3').value, y: 1.5, c: cols.pri },
+                        { t: "6 Months", d: document.getElementById('modLong6').value, y: 2.5, c: cols.sec },
+                        { t: "12 Months", d: document.getElementById('modLong12').value, y: 3.5, c: cols.acc }
+                    ];
+                    phases.forEach(p => {
+                        s.addText(p.t, { x: 1.0, y: p.y, w: 2.0, fontSize: 18, bold: true, color: p.c });
+                        s.addText(p.d, { x: 3.0, y: p.y, w: 6.0, fontSize: 18, color: cols.drk });
+                        s.addShape(pres.ShapeType.line, { x:1.0, y:p.y+0.6, w:8.0, h:0, line:"EEEEEE" });
+                    });
+                }
+
+                // Attendees
+                if (document.getElementById('toggleModAttendees').checked) {
+                    let sQ = pres.addSlide({ masterName: "MASTER" });
+                    sQ.addText("Qualtrics Team", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                    sQ.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.0, w: 9.0, h: 4.0, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    const qText = document.getElementById('modAttQualtrics').value.split('\n');
+                    let qRows = []; qText.forEach(l => qRows.push([{ text: l, options: { bullet: true, color: cols.drk } }]));
+                    sQ.addTable(qRows, { x: 1, y: 1.5, w: 8, border: null });
+                    sQ.addShape(pres.ShapeType.rect, { x: 7.5, y: 0.3, w: 2.0, h: 0.5, fill: "EEEEEE", line: {color:"999999", dashType:'dash'}, text:{text:"INSERT HEADSHOTS", options:{color:"999999", fontSize:10}} });
+
+                    let sC = pres.addSlide({ masterName: "MASTER" });
+                    sC.addText(`${client} Team`, { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.sec });
+                    sC.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.0, w: 9.0, h: 4.0, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                    const cText = document.getElementById('modAttClient').value.split('\n');
+                    let cRows = []; cText.forEach(l => cRows.push([{ text: l, options: { bullet: true, color: cols.drk } }]));
+                    sC.addTable(cRows, { x: 1, y: 1.5, w: 8, border: null });
+                }
+
+                // X4 Logic (Updated)
+                if (document.getElementById('toggleModX4').checked) {
+                    let sX4 = pres.addSlide({ masterName: "MASTER" });
+                    
+                    // Promo Slide (Image or Fallback)
+                    if (x4PromoData) {
+                        // Full screen image override
+                        sX4.addImage({ data: x4PromoData, x: 0, y: 0, w: '100%', h: '100%' });
+                    } else {
+                        // Fallback Text
+                        sX4.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: '100%', h: '100%', fill: '1E1E1E' });
+                        sX4.addText("Qualtrics X4 Summit", { x: 1, y: 2.5, fontSize: 44, bold: true, color: "FFFFFF", align: "center" });
+                        sX4.addText("The Experience Management Event", { x: 1, y: 3.5, fontSize: 18, color: "CCCCCC", align: "center" });
+                    }
+
+                    // Speaker Slides
+                    const speakers = document.querySelectorAll('.x4-speaker-check:checked');
+                    speakers.forEach(sp => {
+                        let sSp = pres.addSlide({ masterName: "MASTER" });
+                        sSp.addText("Keynote Speaker", { x: 0.5, y: 0.3, fontSize: 24, bold: true, color: cols.pri });
+                        
+                        // Speaker Layout
+                        sSp.addShape(pres.ShapeType.rect, { x: 0.5, y: 1.2, w: 9.0, h: 3.8, fill: "FFFFFF", shadow: {type:'outer', color:'000000', opacity:0.1} });
+                        sSp.addText(sp.value, { x: 1.0, y: 2.5, w: 8.0, fontSize: 40, bold: true, color: cols.drk, align:'center' });
+                        sSp.addText("Live at X4 Seattle | March 2026", { x: 1.0, y: 3.5, w: 8.0, fontSize: 18, color: cols.sec, align:'center' });
+                    });
+                }
+            }
+
+            pres.writeFile({ fileName: `${client}_QBR.pptx` });
+        }
+    </script>
+</body>
+</html>
